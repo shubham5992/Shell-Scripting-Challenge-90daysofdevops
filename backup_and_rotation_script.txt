@@ -1,0 +1,45 @@
+#!/bin/bash
+
+<< readme
+This script creates backups with a 3-day rotation.
+
+Usage: ./script.sh <source_dir> <backup_dir>
+Example: ./script.sh /data /backup
+readme
+
+display_usage_file() {
+  echo "Please insert correct arguments: <source_dir> <backup_dir>"
+}
+
+if [ $# -ne 2 ]; then
+  display_usage_file
+  exit 1
+fi
+
+source_dir=$1
+backup_dir=$2
+time_stamp=$(date '+%Y-%m-%d_%H-%M-%S')
+
+create_function_backup() {
+  zip -r "${backup_dir}/backup_${time_stamp}.zip" "${source_dir}" > /dev/null
+  if [ $? -eq 0 ]; then
+    echo "Backup generated successfully."
+  else
+    echo "Backup failed."
+  fi
+}
+
+create_backup_rotation() {
+  backups=($(ls -t "${backup_dir}/backup"*.zip))
+  if [ "${#backups[@]}" -gt 3 ]; then
+    echo "Performing rotation for 3 days"
+    backups_to_remove=("${backups[@]:3}")
+    for backup in "${backups_to_remove[@]}"; do
+      rm "$backup"
+      echo "Removed old backup: $backup"
+    done
+  fi
+}
+
+create_function_backup
+create_backup_rotation
